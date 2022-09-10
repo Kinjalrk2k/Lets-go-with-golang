@@ -226,7 +226,7 @@ createdDate := time.Date(2000, time.September, 22, 23, 23, 0, 0, time.UTC)
 fmt.Println(createdDate.Format("01-02-2006 Monday"))
 ```
 
-# 10. Build for windows, linux and mac
+# 10. Build for Windows, Linux and Mac
 
 - Go gives us the tools to create executables
 
@@ -239,4 +239,65 @@ go build
 ```sh
 GOOS="windows" go build
 GOOS="linux" go build
+```
+
+# 11. Memory management in golang
+
+- Memory allocation and deallocation happens automatically
+- Methods for memory management
+  - `new()`
+    - Allocate memory but no INIT
+    - We'll get the memory address
+    - Zeroed Storage (data cannot be put initially)
+  - `make()`
+    - Allocate memory and INIT
+    - We'll get the memory address
+    - Non-zeroed storage
+- GC or Garbage collection happens automatically
+  - However there are certain requirements for the GC to work
+
+> The GOGC variable sets the initial garbage collection target percentage. A collection is triggered when the ratio of freshly allocated data to live data remaining after the previous collection reaches this percentage. The default is GOGC=100. Setting GOGC=off disables the garbage collector entirely. runtime/debug.SetGCPercent allows changing this percentage at run time.
+> [runtime](https://pkg.go.dev/runtime)
+
+# 12. Pointers in golang
+
+- Whenever we declare a variable, an array etc, it is just a reference to it's memory
+- Sometimes while passing these variables to a function, these variables do not get passed on directly. A copy of these variables gets passed on which creats irregularities in the program. So, instead of passing the variables, if we pass the memory address of the variables, it garuntees that the value we pass is the actual value from the memory
+- Defaut value of a pointer id `<nil>`
+
+```go
+var ptr *int // pointer that'll hold integer value
+fmt.Println("Value of pointer is", ptr)
+```
+
+- `&` is usef for referencing
+- `*` is used to denote a pointer
+
+```go
+myNumber := 23
+var ptr = &myNumber
+fmt.Println("Value of actual pointer is", ptr)  // 0x1400011c00
+fmt.Println("Value of actual pointer is", *ptr) // 23
+
+*ptr = *ptr + 2
+fmt.Println("New value is: ", myNumber) // 25
+```
+
+# 13. Array in golang
+
+- Array is very less used in golang
+- Need to explictly mention the amount of space we need
+
+```go
+var fruitList [4]string
+
+fruitList[0] = "apple"
+fruitList[1] = "tomato"
+fruitList[3] = "peach"
+
+fmt.Println("Fruit List is", fruitList)
+fmt.Println("Fruit List lenght is", len(fruitList))
+
+var vegList = [3]string{"potato", "beans", "mushroom"}
+fmt.Println("Veggy list is", vegList)
 ```
