@@ -301,3 +301,95 @@ fmt.Println("Fruit List lenght is", len(fruitList))
 var vegList = [3]string{"potato", "beans", "mushroom"}
 fmt.Println("Veggy list is", vegList)
 ```
+
+# 14. Slices in golang
+
+- Mush more powerful and mostly used
+- Under the hood Arrays
+- Useful when working with databases
+- When using thr `var` syntax, we need to initialize slices too
+
+```go
+var fruitList = []string{"Apple", "Tomato", "Peach"}
+
+// fmt.Println("Type of fruitList is %T", fruitList)
+
+fruitList = append(fruitList, "Mango", "Banana")
+fmt.Println(fruitList)
+
+// used for slicing
+fruitList = (fruitList[1:3]) // [1:] or [:3] also works
+fmt.Println(fruitList)
+
+// define a slice with make
+highScores := make([]int, 4)
+highScores[0] = 234
+highScores[1] = 945
+highScores[2] = 465
+highScores[3] = 867
+
+// highScores[4] = 777 // crashed
+highScores = append(highScores, 555, 666, 777) // doesn't crash - append reallocated memory
+fmt.Println(highScores)
+
+fmt.Println(sort.IntsAreSorted(highScores))
+sort.Ints(highScores) // works in place
+fmt.Println(highScores)
+fmt.Println(sort.IntsAreSorted(highScores))
+```
+
+# 15. How to remove a value from slice based on index in golang
+
+> Need to understand this in detail
+
+```go
+var courses = []string{"react", "javascript", "swift", "python", "go"}
+fmt.Println(courses)
+
+var index int = 2
+courses = append(courses[:index], courses[index+1:]...)
+fmt.Println(courses)
+```
+
+- `...` is used for varargs
+
+# 16. Maps in golang
+
+- Format in key-value pairs
+- `make` can be used to create maps
+
+```go
+languages := make(map[string]string)
+languages["js"] = "JavaScript"
+languages["rb"] = "Ruby"
+languages["go"] = "Go"
+languages["py"] = "Python"
+
+fmt.Println("List of all languages:", languages)
+fmt.Println("JS is:", languages["js"])
+
+// deleting a value
+delete(languages, "rb")
+fmt.Println("List of all languages:", languages)
+
+// loop through maps
+for key, value := range languages { // can be for _, value := (comma-ok syntax)
+	fmt.Printf("For key %v, value is %v\n", key, value)
+}
+```
+
+# 17. Structs in golang
+
+- There is no inheritence in golang
+- No `super()`
+
+```go
+type User struct {
+	Name   string
+	Email  string
+	Status bool
+	Age    int
+}
+```
+
+- Capitals as we need to access them from outside
