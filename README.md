@@ -393,3 +393,14 @@ type User struct {
 ```
 
 - Capitals as we need to access them from outside
+
+```go
+kinjal := User{"Kinjal", "kinjalrk2k@gmail.com", true, 22}
+fmt.Println(kinjal)
+fmt.Printf("Details are: %+v\n", kinjal)
+
+kinjalAgain := User{Name: "Kinjal", Email: "kinjalrk2k@gmail.com", Status: true, Age: 22}
+fmt.Println(kinjalAgain)
+
+fmt.Printf("Name is %v and email is %v", kinjal.Name, kinjal.Email)
+```
