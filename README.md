@@ -404,3 +404,238 @@ fmt.Println(kinjalAgain)
 
 fmt.Printf("Name is %v and email is %v", kinjal.Name, kinjal.Email)
 ```
+
+# 18. If else in golang
+
+- Control flow
+
+```go
+if loginCount < 10 {
+	result = "Regular user"
+} else if loginCount > 10 {
+	result = "Watch Out!"
+} else {
+	result = "Exactly 10"
+}
+```
+
+- `{` should be in the same line. Same thing with `} else {`
+- Initializing on the go
+
+```go
+if num := 3; num < 10 {
+	fmt.Println("num is less than 10")
+} else {
+	fmt.Println("num is not less than 10")
+}
+```
+
+# 19. Switch case in golang and online playground
+
+- Generate random number
+
+```go
+rand.Seed(time.Now().UnixNano())
+diceNumber := rand.Intn(6) + 1
+```
+
+- Switch case
+  - No need for `break` statement
+
+> Need to figure out `fallthrough`
+
+```go
+switch diceNumber {
+case 1:
+	fmt.Println("Dice value is 1 and you can open")
+case 2:
+	fallthrough
+case 3:
+	fallthrough
+case 4:
+	fallthrough
+case 5:
+	fmt.Printf("You can move %v spots\n", diceNumber)
+case 6:
+	fmt.Println("You can move 6 spots and roll the dice again!")
+default:
+	fmt.Println("What was that?!?")
+}
+```
+
+# 20. Loop break continue and goto in golang
+
+- Only `for` loop is present
+- Nothing like `++d` in Go
+
+```go
+for d := 0; d < len(days); d++ {
+	fmt.Println(days[d])
+}
+```
+
+- `range` automatically loops through array or slices and yields index
+
+```go
+for i := range days { // i is index here
+	fmt.Println(days[i])
+}
+```
+
+- For of loop
+
+```go
+for index, day := range days {
+	fmt.Printf("Index is %v and Day is %v\n", index, day)
+}
+```
+
+- While loop
+
+```go
+rougeValue := 1
+for rougeValue < 10 {
+  fmt.Println("Value is:", rougeValue)
+	rougeValue++
+}
+```
+
+- `continue`, `break` and `goto` is also present in Go
+- Using `break`
+
+```go
+for rougeValue < 10 {
+
+	if rougeValue == 5 {
+		break
+	}
+
+	fmt.Println("Value is:", rougeValue)
+	rougeValue++
+}
+```
+
+- Using `goto`
+
+```go
+	rougeValue := 1
+	for rougeValue < 10 {
+
+		if rougeValue == 5 {
+			goto lco
+		}
+
+		fmt.Println("Value is:", rougeValue)
+		rougeValue++
+	}
+
+lco:
+	fmt.Println("Jumping...")
+```
+
+# 21. Functions in golang
+
+- `main()` is the entry point in a Go program
+
+```go
+func greeter() {
+	fmt.Println("Namastee from GoLang")
+}
+```
+
+- Functions cannot be written inside functions
+
+> IIFEs and lambda functions are possible in GoLang
+
+```go
+func adder(valOne int, valTwo int) int /* this is return type */ {
+	return valOne + valTwo
+}
+```
+
+- Varargs
+
+```go
+func proAdder(values ...int) int {
+	total := 0
+	for _, value := range values {
+		total += value
+	}
+
+	return total
+}
+```
+
+- Returning multiple values
+
+```go
+func proAdder(values ...int) (int, string) {
+	total := 0
+	for _, value := range values {
+		total += value
+	}
+
+	return total, "Hi from proAdder function"
+}
+```
+
+# 22. Methods in golang
+
+- Not much of a big difference though
+- Mothods go into `structs` and we call them methods
+
+```go
+type User struct {
+	Name   string
+	Email  string
+	Status bool
+	Age    int
+}
+
+func (u User) GetStatus() {
+	fmt.Println("Is user active?", u.Status)
+}
+
+func (u User /* a copy is passed */) NewMail() {
+	u.Email = "test@go.dev" // does not actually change the property
+	fmt.Println("Email of this user is:", u.Email)
+}
+```
+
+# 23. Defer in golan
+
+- [Docs](https://go.dev/ref/spec#Defer_statements)
+
+> A "defer" statement invokes a function whose execution is deferred to the moment the surrounding function returns, either because the surrounding function executed a return statement, reached the end of its function body, or because the corresponding goroutine is panicking.
+
+- When we use `defer` for a statement, then that statement is run at the end of the function
+
+> deferred functions are invoked immediately before the surrounding function returns, in the reverse order they were deferred.
+
+- LIFO
+
+```go
+func main() {
+	defer fmt.Println("Hello World")
+	fmt.Println("Hello")
+}
+
+// OUTPUT :-
+// Hello
+// Hello World
+```
+
+```go
+func main() {
+	defer fmt.Println("Hello World")
+	defer fmt.Println("One")
+	defer fmt.Println("Two")
+	fmt.Println("Hello")
+}
+
+// OUTPUT :-
+// Hello
+// Two
+// One
+// Hello World
+```
