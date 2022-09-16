@@ -905,3 +905,126 @@ func DecodeJson() {
 var myOnlineCourses []map[string]interface{} // interface - 'cause we do not know the type of it's value
 json.Unmarshal(jsonDataFromWeb, &myOnlineCourses)
 ```
+
+# 33. A long video on MOD in golang
+
+- `go mod` is a tooling
+- Tools are used for a lot of stuffs, like build, run etc
+- We can still run Go code without modules, but it is not a good way
+- Correct way to handle mods
+
+```sh
+go mod init github.com/kinjalrk2k/mymodules
+```
+
+- _`go.mod`_ file
+
+```mod
+module github.com/kinjalrk2k/mymodules
+
+go 1.19
+```
+
+- GoLang follows a SemVer version - Semantic Versioning
+  - `major.minor.patch`
+  - [Docs](https://semver.org/)
+- When dependencies are used, they do not come in directly in the working directory
+- Modules came into exsistence since 2019 (Previously, they had something like Workspaces)
+
+  - [Blog](https://go.dev/blog/using-go-modules)
+    > Go 1.11 and 1.12 include preliminary support for modules, Go’s new dependency management system that makes dependency version information explicit and easier to manage.
+
+## Trying to install a dependency
+
+- Installing `gorrila/mux` [Docs](https://github.com/gorilla/mux#install)
+- We'll use a Go toolchain
+- `go get` is used to pull in dependencies from the **web**
+
+```sh
+go get -u github.com/gorilla/mux
+```
+
+- A _`go.sum`_ file is created and the `go.mod` file is updated
+- _`go.mod`_ file
+  - `indirect` means we're not using this dependency in our code yet
+  - Run `go mod tidy` to remove this once used
+
+```mod
+module github.com/kinjalrk2k/mymodules
+
+go 1.19
+
+require github.com/gorilla/mux v1.8.0 // indirect
+```
+
+- _`go.sum`_ file
+  - Stores hashes of the dependencies for security reasons
+  - `go mod verify` verifies the hashes
+
+```sum
+github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
+github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
+```
+
+- The dependencies are installed, but we do not see them in our working directory
+  - From `go env` we can see that `GOPATH="/Users/kinjal/go"`
+  - The dependencies go in here: `/Users/kinjal/go/pkg/mod/cache/download
+
+## `go list`
+
+- `go list` - lists all the dependencies
+- `go list all` - dumps all the packages installed
+- `go list -m all` - lists all the dependencies in our module
+- `go list -m -versions github.com/gorilla/mux` - lists all the versions of this package
+- `go mod why github.com/gorilla/mux` - shows which module is dependent in this module
+- `go mod graph` - prints the dependency graph
+- `go mod edit -go 1.16` - changes the go version in the _`go.mod`_ file
+- `go mod edit -module 1.16` - changes the module version in the _`go.mod`_ file
+
+## A simple server
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+)
+
+func main() {
+	fmt.Println("Hello mog in GoLang")
+	greeter()
+
+	r := mux.NewRouter()
+	r.HandleFunc("/", serveHome).Methods("GET")
+
+	log.Fatal(http.ListenAndServe(":4000", r))
+}
+
+func greeter() {
+	fmt.Println("Hey there mod users")
+}
+
+func serveHome(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("<h1>Welcome to gorilla/mux</h1>"))
+}
+```
+
+## Vendors
+
+```sh
+go mod vendor
+```
+
+- Something like node_modules
+- Pull up the dependency code directly in our working directly, so than we can edit them if we want to
+- `vendor.modules.txt` lists down all the modules
+- To run the go file using the dependencies in the vendor
+  - It first looks into the Vendor folder to grab the dependency. If not present, then goes to the cached version or from the web!
+
+```sh
+go run -mod=vendor main.go
+```
