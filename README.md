@@ -639,3 +639,269 @@ func main() {
 // One
 // Hello World
 ```
+
+# 24. Working with files in golang
+
+- Can read/erite text files
+- `panic()` shuts down the program and handles the error
+
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+)
+
+func main() {
+	fmt.Println("Welcome to files in golang")
+
+	content := "This needs to go in a file - Kinjal Raykarmakar"
+
+	file, err := os.Create("./mygofile.txt")
+	checkNillErr(err)
+	defer file.Close()
+
+	length, err := io.WriteString(file, content)
+	checkNillErr(err)
+
+	fmt.Println("Length is:", length)
+
+	readFile("./mygofile.txt")
+}
+
+func readFile(filename string) {
+	dataByte, err := os.ReadFile(filename) // data is not a string, but in bytes
+	checkNillErr(err)
+
+	fmt.Println("Text data inside the file is\n", string(dataByte))
+}
+
+func checkNillErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+```
+
+> `io/ioutils` is deprecated, hence using the `os` package for reading a file
+
+# 25. Handling web request in golang
+
+- [net/http](https://pkg.go.dev/net/http)
+- We receive a [`Response`](https://pkg.go.dev/net/http#Response) type back when making a web request
+  - The Close is important!
+  - > // ReadResponse nor Response.Write ever closes a connection.
+  - We need to manually close it
+- The type of response is `*http.Response` (a pointer)
+- `response.Body.Close()` is used to close the response
+- Making a `GET` request and reading the response
+
+```go
+response, err := http.Get(url)
+checkNillErr(err)
+defer response.Body.Close()
+
+fmt.Printf("Response is of type %T\n", response)
+
+dataBytes, err := io.ReadAll(response.Body)
+
+checkNillErr(err)
+content := string(dataBytes)
+fmt.Println("The content returned from the server is:\n", content)
+```
+
+# 26. Handling URL in golang
+
+```go
+result, _ := url.Parse(myurl)
+
+fmt.Println("Scheme:", result.Scheme)
+fmt.Println("Host:", result.Host)
+fmt.Println("Path:", result.Path)
+fmt.Println("Port:", result.Port())
+fmt.Println("RawQuery:", result.RawQuery)
+```
+
+- Query params are a type of `url.Values` (Key-value pairs)
+- Create a URL
+
+```go
+// need to pass reference
+partsOfUrl := &url.URL{
+	Scheme:   "https",
+	Host:     "lco.dev",
+	Path:     "/tutcss",
+	RawQuery: "user=kinjal",
+}
+
+anotherUrl := partsOfUrl.String()
+fmt.Println(anotherUrl)
+```
+
+# 28. How to make GET request in golang
+
+```go
+func PerformGetRequest() {
+	const myurl = "http://localhost:8000/get"
+
+	response, err := http.Get((myurl))
+	checkNillErr(err)
+	defer response.Body.Close()
+
+	fmt.Println("Status Code:", response.StatusCode)
+	fmt.Println("Content Length:", response.ContentLength)
+
+	content, _ := (io.ReadAll(response.Body))
+	fmt.Println(string(content))
+}
+```
+
+- Alternate way to handle byte to string conversation. This gives us more control, as we still have the raw data in the `responseString`
+
+```go
+var responseString strings.Builder
+byteCount, _ := responseString.Write(content)
+fmt.Println("ByteCount is:", byteCount)
+fmt.Println(responseString.String())
+```
+
+# 29. How to make POST request with JSON data in golang
+
+```go
+func PerformPostJsonRequest() {
+	const myurl = "http://localhost:8000/post"
+
+	// fake json payload
+	requestBody := strings.NewReader(`
+		{
+			"coursename":"Let's go with golang",
+			"price": 0,
+			"platform": "lco.in"
+		}
+	`)
+
+	response, err := http.Post(myurl, "application/json", requestBody)
+	checkNillErr(err)
+	defer response.Body.Close()
+
+	content, _ := (io.ReadAll(response.Body))
+
+	fmt.Println(string(content))
+}
+```
+
+# 30. How to send form data in golang
+
+```go
+func PerformPostFormRequest() {
+	const myurl = "http://localhost:8000/postform"
+
+	// form data
+	data := url.Values{}
+	data.Add("firstname", "Kinjal")
+	data.Add("lastname", "Raykarmakar")
+	data.Add("email", "kinjalrk2k@gmail.com")
+
+	response, err := http.PostForm(myurl, data)
+	checkNillErr(err)
+	defer response.Body.Close()
+
+	content, _ := (io.ReadAll(response.Body))
+
+	fmt.Println(string(content))
+}
+```
+
+# 31. How to create JSON data in golang
+
+- Encoding of JSON: Converting key-value pairs into valid JSON string
+- Struct defination
+
+```go
+type course struct {
+	Name     string   `json:"coursename"`
+	Price    int      `json:"price"`
+	Platform string   `json:"website"`
+	Password string   `json:"-"` // dash means it'll remove it while marshalling
+	Tags     []string `json:"tags,omitempty"`
+}
+```
+
+- The `json:....` act as an alias which renames the field name while marshalling
+- `omitempty` skips the field alltogether when `nill` is encountered within it
+
+- Encoding the JSON
+
+```go
+func EncodeJSON() {
+	lcoCourses := []course{
+		{Name: "ReactJS Bootcamp", Price: 299, Platform: "learncodeonline.in", Password: "abc123", Tags: []string{"web-dev", "js"}},
+		{Name: "MERN Bootcamp", Price: 199, Platform: "learncodeonline.in", Password: "bcd123", Tags: []string{"full-stack", "js"}},
+		{Name: "Angular Bootcamp", Price: 299, Platform: "learncodeonline.in", Password: "kin123", Tags: nil},
+	}
+
+	// package this data as JSON data
+	// finalJSON, err := json.Marshal(lcoCourses)
+	finalJSON, err := json.MarshalIndent(lcoCourses, "", "\t")
+	checkNillErr(err)
+
+	fmt.Printf("%s\n", finalJSON)
+}
+```
+
+# 32. How to consume JSON data in golang
+
+- Decoding the JSON
+
+```go
+func DecodeJson() {
+	jsonDataFromWeb := []byte(`
+		[
+			{
+							"coursename": "ReactJS Bootcamp",
+							"price": 299,
+							"website": "learncodeonline.in",
+							"tags": [
+											"web-dev",
+											"js"
+							]
+			},
+			{
+							"coursename": "MERN Bootcamp",
+							"price": 199,
+							"website": "learncodeonline.in",
+							"tags": [
+											"full-stack",
+											"js"
+							]
+			},
+			{
+							"coursename": "Angular Bootcamp",
+							"price": 299,
+							"website": "learncodeonline.in"
+			}
+		]
+	`)
+
+	var lcoCourses []course
+
+	checkValid := json.Valid(jsonDataFromWeb)
+	if checkValid {
+		fmt.Println("JSON was valid!")
+		json.Unmarshal(jsonDataFromWeb, &lcoCourses) // passing reference, 'cause i want to save it here
+		fmt.Printf("%#v\n", lcoCourses)
+	} else {
+		fmt.Println("JSON was invalid")
+	}
+}
+```
+
+- When you do not want to create the struct
+
+```go
+// sometimes i don't waana create the struct
+var myOnlineCourses []map[string]interface{} // interface - 'cause we do not know the type of it's value
+json.Unmarshal(jsonDataFromWeb, &myOnlineCourses)
+```

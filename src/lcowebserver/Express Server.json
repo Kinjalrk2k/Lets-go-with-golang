@@ -1,0 +1,89 @@
+{
+  "v": 1,
+  "name": "Express Server",
+  "folders": [],
+  "requests": [
+    {
+      "v": "1",
+      "endpoint": "http://localhost:3000",
+      "name": "/",
+      "params": [],
+      "headers": [],
+      "method": "GET",
+      "auth": {
+        "token": "{{ca_backoffice_jwt}}",
+        "authType": "bearer",
+        "authActive": true,
+        "addTo": "Headers",
+        "key": "",
+        "value": ""
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": { "body": "", "contentType": "application/json" }
+    },
+    {
+      "v": "1",
+      "endpoint": "http://localhost:8000/get",
+      "name": "/get",
+      "params": [],
+      "headers": [],
+      "method": "GET",
+      "auth": {
+        "token": "{{ca_backoffice_jwt}}",
+        "authType": "bearer",
+        "authActive": true,
+        "addTo": "Headers",
+        "key": "",
+        "value": ""
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": { "body": "", "contentType": "application/json" }
+    },
+    {
+      "v": "1",
+      "endpoint": "http://localhost:8000/post",
+      "name": "/post",
+      "params": [],
+      "headers": [],
+      "method": "POST",
+      "auth": {
+        "token": "{{ca_backoffice_jwt}}",
+        "authType": "bearer",
+        "authActive": true,
+        "addTo": "Headers",
+        "key": "",
+        "value": ""
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "body": "{\n  \"foo\": \"bar\"\n}",
+        "contentType": "application/json"
+      }
+    },
+    {
+      "v": "1",
+      "endpoint": "http://localhost:8000/postform",
+      "name": "/postform",
+      "params": [],
+      "headers": [],
+      "method": "POST",
+      "auth": {
+        "token": "{{ca_backoffice_jwt}}",
+        "authType": "bearer",
+        "authActive": true,
+        "addTo": "Headers",
+        "key": "",
+        "value": ""
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/x-www-form-urlencoded",
+        "body": "foo: bar"
+      }
+    }
+  ]
+}
