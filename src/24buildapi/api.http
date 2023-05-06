@@ -1,0 +1,48 @@
+# home
+GET http://localhost:4000
+
+###
+
+# list all courses
+GET http://localhost:4000/courses
+
+###
+
+# list one course
+GET http://localhost:4000/course/1
+
+###
+
+# create one course
+POST http://localhost:4000/course
+Content-Type: application/json
+
+{
+  "course_name": "React",
+  "price": 1000,
+  "author": {
+    "full_name": "Hitesh",
+    "website": "https://lco.dev"
+  }
+}
+
+###
+
+# edit a course
+PUT http://localhost:4000/course/1
+Content-Type: application/json
+
+{
+  "course_name": "NextJS",
+  "price": 100,
+  "author": {
+    "full_name": "Hitesh",
+    "website": "https://lco.dev"
+  }
+}
+
+###
+
+# delete a course
+DELETE http://localhost:4000/course/1
+Content-Type: application/json
