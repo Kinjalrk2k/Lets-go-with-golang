@@ -1198,3 +1198,249 @@ func main() {
 	log.Fatal(http.ListenAndServe(":4000", r))
 }
 ```
+
+# 41. MongoDB setup for API in golang
+
+https://go.mongodb.org/
+
+- There should be only one go file: `main.go` in the root directory
+
+# 42. Defining models for netflix in golang
+
+_model/netflix.model.go_
+
+```go
+package netflixModel
+
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type Netflix struct {
+	ID      primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Movie   string             `json:"movie,omitempty"`
+	Watched bool               `json:"watched,omitempty"`
+}
+```
+
+# 43. Making a connection to database in golang
+
+- https://pkg.go.dev/context
+- WHenever we're connecting to something outside our system, we'll need to work with contexts
+
+```go
+const connectionString = "mongodb+srv://..."
+const dbName = "netflix"
+const collectionName = "watchlist"
+
+// important!
+var collection *mongo.Collection
+
+// connect with MongoDB
+
+// specialized method - runs on first time the application starts
+func init() {
+	// client options
+	clientOptions := options.Client().ApplyURI(connectionString)
+
+	// connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Successfully connected to MongoDB!")
+
+	collection = client.Database(dbName).Collection(collectionName)
+	fmt.Println("Collection Reference is ready!")
+}
+```
+
+# 44. Insert data in mongodb in golang
+
+- Install go tools for VSCode
+
+```go
+// insert a record
+func insertOneMovie(movie model.Netflix) {
+	inserted, err := collection.InsertOne(context.Background(), movie)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Inserted with ID", inserted.InsertedID)
+}
+```
+
+# 45. Update a record in mongodb in golang
+
+- https://stackoverflow.com/questions/64281675/bson-d-vs-bson-m-for-find-queries
+
+```go
+// update a record
+func updateOneMovie(movieId string) {
+	id, _ := primitive.ObjectIDFromHex(movieId)
+	filter := bson.M{"_id": id} // read more about bson.M vs bson.D
+	update := bson.M{"$set": bson.M{"watched": true}}
+
+	updated, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Modified count", updated.ModifiedCount)
+}
+```
+
+# 46. Delete one and delete many in mongodb in golang
+
+```go
+// delete all records
+func deleteAllMovies() int64 {
+	deleted, err := collection.DeleteMany(context.Background(), bson.D{{}})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Deleted count", deleted.DeletedCount)
+	return deleted.DeletedCount
+}
+```
+
+# 47. Get all collection in mongodb in golang
+
+- https://www.mongodb.com/blog/post/quick-start-golang--mongodb--how-to-read-documents
+
+```go
+// get all movies
+func getAllMovies() []primitive.M {
+	curr, err := collection.Find(context.Background(), bson.M{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer curr.Close(context.Background())
+
+	var movies []primitive.M
+	for curr.Next(context.Background()) {
+		var movie bson.M
+		err := curr.Decode(&movie)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		movies = append(movies, movie)
+	}
+
+	return movies
+}
+```
+
+# 48. Get all movies from DB in golang
+
+```go
+func GetAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	allMovies := getAllMovies()
+	json.NewEncoder(w).Encode(allMovies)
+}
+```
+
+# 49. Mark movie as watched in golang
+
+```go
+func Create(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Allow-Control-Allow-Methods", "POST")
+
+	var movie model.Netflix
+	json.NewDecoder(r.Body).Decode(&movie)
+	insertOneMovie(movie)
+
+	json.NewEncoder(w).Encode(movie)
+}
+```
+
+```go
+func MarkWatched(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Allow-Control-Allow-Methods", "POST")
+
+	params := mux.Vars(r)
+	updateOneMovie(params["id"])
+
+	json.NewEncoder(w).Encode(`{"msg": "Marked as watched"}`)
+}
+```
+
+# 50. Delete 1 and all movie in golang
+
+```go
+func DeleteOne(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Allow-Control-Allow-Methods", "DELETE")
+
+	params := mux.Vars(r)
+	deleteOneMovie(params["id"])
+
+	json.NewEncoder(w).Encode(`{"msg": "Deleted successfully"}`)
+}
+```
+
+```go
+func DeleteAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Allow-Control-Allow-Methods", "DELETE")
+
+	deleteAllMovies()
+
+	json.NewEncoder(w).Encode(`{"msg": "Deleted all successfully"}`)
+}
+```
+
+# 51. Creating routes and testing API in golang
+
+```go
+package router
+
+import (
+	"github.com/gorilla/mux"
+	"github.com/kinjalrk2k/mongoapi/controller"
+)
+
+func Router() *mux.Router {
+	router := mux.NewRouter()
+
+	router.HandleFunc("/api/movie", controller.GetAll).Methods("GET")
+	router.HandleFunc("/api/movie", controller.Create).Methods("POST")
+	router.HandleFunc("/api/movie/{id}", controller.MarkWatched).Methods("PUT")
+	router.HandleFunc("/api/movie/{id}", controller.DeleteOne).Methods("DELETE")
+	router.HandleFunc("/api/movie", controller.DeleteAll).Methods("DELETE")
+
+	return router
+}
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/kinjalrk2k/mongoapi/router"
+)
+
+func main() {
+	fmt.Println("MongoDB API")
+
+	r := router.Router()
+
+	fmt.Println("Server is getting started...")
+	fmt.Println("Listening on PORT 4000")
+	log.Fatal(http.ListenAndServe(":4000", r))
+}
+```

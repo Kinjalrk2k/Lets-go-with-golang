@@ -1,0 +1,33 @@
+# Create a movie
+POST http://localhost:4000/api/movie
+Content-Type: application/json
+
+{
+  "movie": "Orphan",
+  "watched": false
+}
+
+###
+
+# List all movies
+GET http://localhost:4000/api/movie
+Content-Type: application/json
+
+###
+
+# Mark as Watched
+PUT http://localhost:4000/api/movie/64610465ee67c1b1105d65bc
+Content-Type: application/json
+
+###
+
+# Delete a Movie
+DELETE http://localhost:4000/api/movie/64610465ee67c1b1105d65bc
+Content-Type: application/json
+
+###
+
+# Delete all movies
+DELETE http://localhost:4000/api/movie
+Content-Type: application/json
+
