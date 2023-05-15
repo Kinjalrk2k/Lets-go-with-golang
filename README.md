@@ -1444,3 +1444,298 @@ func main() {
 	log.Fatal(http.ListenAndServe(":4000", r))
 }
 ```
+
+# 52. Concurrency and goroutines in golang
+
+- Concurrency vs Parallelism
+
+![](./images/concurrency_parallelism.png)
+
+- Go routines are used to achive Parallelism
+  - They are different from threads
+  - Threads are managed by OS and have a fixed stack (1 MB)
+  - Go routines are managed by Go Runtime and have a flexible stack (2 KB)
+
+> Do not communicate by sharing memory; instead share memory by communicating
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	go greeter("Hello") // fire up the routine, but we didn't wait
+	greeter("World")
+}
+
+func greeter(s string) {
+	for i := 0; i < 5; i++ {
+		fmt.Println(s)
+	}
+}
+```
+
+- https://pkg.go.dev/sync
+
+# 53. Wait groups in golang
+
+- Wait Group is a higher version of sleeping in code
+- We can do 3 things on a wait group
+  - When a go routine is created, we can add it to the wait group
+  - When the go routine is completed we can mark it as done
+  - We can optionally also wait for a go routine
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"sync"
+)
+
+var wg sync.WaitGroup // a wait group; usally these are pointers!
+
+func main() {
+	websites := []string{
+		"http://lco.dev",
+		"http://go.dev",
+		"http://google.co.in",
+		"http://fb.com",
+		"http://github.com",
+		"http://kinjal.dev",
+	}
+
+	for _, website := range websites {
+		go getStatusCode(website) // starting go routines
+		wg.Add(1)
+	}
+
+	wg.Wait() // waiting for the go routines to complete
+}
+
+func getStatusCode(endpoint string) {
+	defer wg.Done() // marking as done when done!
+
+	response, err := http.Get(endpoint)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%s \t Status %d\n", endpoint, response.StatusCode)
+}
+
+```
+
+# 54. Mutex in golang
+
+- https://pkg.go.dev/sync#Mutex
+- Lock over the memory
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"sync"
+)
+
+var signals = []string{}
+
+var wg sync.WaitGroup // a wait group; usually these are pointers!
+var mut sync.Mutex    // usually a pointer
+
+func main() {
+	// go greeter("Hello") // fire up the routine, but we didn't wait
+	// greeter("World")
+
+	websites := []string{
+		"http://lco.dev",
+		"http://go.dev",
+		"http://google.co.in",
+		"http://fb.com",
+		"http://github.com",
+		"http://kinjal.dev",
+	}
+
+	for _, website := range websites {
+		go getStatusCode(website) // starting go routines
+		wg.Add(1)
+	}
+
+	wg.Wait() // waiting for the go routines to complete
+
+	fmt.Println(signals)
+}
+
+func getStatusCode(endpoint string) {
+	defer wg.Done() // marking as done when done!
+
+	response, err := http.Get(endpoint)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// making this thread safe!
+	mut.Lock()
+	signals = append(signals, endpoint) // trying to access the same resource in multiple threads
+	mut.Unlock()
+	fmt.Printf("%s \t Status %d\n", endpoint, response.StatusCode)
+}
+```
+
+# 55. Race Condition in golang
+
+- Check race condition: `go run --race .`
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Race conditions")
+
+	wg := &sync.WaitGroup{}
+	mut := &sync.RWMutex{}
+
+	var score = []int{0}
+
+	wg.Add(4) // 4 is the nmber of go routines
+
+	//  IIFE go routines
+	go func(wg *sync.WaitGroup, mut *sync.RWMutex) {
+		fmt.Println("Routine One")
+		mut.Lock()
+		score = append(score, 1)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+
+	go func(wg *sync.WaitGroup, mut *sync.RWMutex) {
+		fmt.Println("Routine Two")
+		mut.Lock()
+		score = append(score, 2)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+
+	go func(wg *sync.WaitGroup, mut *sync.RWMutex) {
+		fmt.Println("Routine Three")
+		mut.Lock()
+		score = append(score, 3)
+		mut.Unlock()
+		wg.Done()
+	}(wg, mut)
+
+	go func(wg *sync.WaitGroup, mut *sync.RWMutex) {
+		fmt.Println("Routine Four")
+
+		// doing a read-only lock in mutex
+		mut.RLock()
+		fmt.Println(score)
+		mut.RUnlock()
+		wg.Done()
+	}(wg, mut)
+
+	wg.Wait()
+
+	fmt.Println(score)
+}
+```
+
+# 56. Channels and Deadlock in golang
+
+- Channels is an array of go routines that'll let them talk to each other
+
+> I dont undersnd what's happening here!
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	fmt.Println("Channels")
+
+	myChannel := make(chan int, 2) // buffered channel
+	wg := &sync.WaitGroup{}
+
+	wg.Add(2)
+
+	// recieve only
+	go func(ch <-chan int, wg *sync.WaitGroup) {
+		val, isChannelOpen := <-myChannel
+		fmt.Println(isChannelOpen)
+		fmt.Println(val) // listens for values
+		wg.Done()
+	}(myChannel, wg)
+
+	// send only
+	go func(ch chan<- int, wg *sync.WaitGroup) {
+		myChannel <- 5 // produces the value
+		myChannel <- 6
+		close(myChannel)
+		wg.Done()
+	}(myChannel, wg)
+
+	wg.Wait()
+}
+```
+
+# 57. Math, crypto and random number in golang
+
+- https://pkg.go.dev/math/rand
+- https://pkg.go.dev/crypto/rand
+- Using `math/rand`
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func main() {
+	fmt.Println("Math in Golang")
+
+	// random numbers
+
+	// math/rand
+	rand.Seed(time.Now().UnixNano())
+	fmt.Println(rand.Intn(5)) // 5 exclusive
+}
+```
+
+- Using `crypto/rand`
+
+```go
+package main
+
+import (
+	"crypto/rand"
+	"fmt"
+	"math/big"
+)
+
+func main() {
+	fmt.Println("Math in Golang")
+
+	// random numbers
+
+	// math/crypto
+	randomNumber, _ := rand.Int(rand.Reader, big.NewInt(5))
+	fmt.Println(randomNumber)
+}
+```
